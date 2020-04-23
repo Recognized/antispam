@@ -25,7 +25,7 @@ def main():
     tempTest = "temp_test_antispam.csv"
     tempTrain = "temp_train_antispam.csv"
 
-    p = "gradlew.bat" if os.name == 'nt' else "gradlew"
+    p = "gradlew.bat" if os.name == 'nt' else "./gradlew"
     f = [p, "run", '--args="%s,%s,%s,%s"' % (args.train, args.test, tempTrain, tempTest)]
     print(f)
 
