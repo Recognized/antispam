@@ -19,7 +19,7 @@ fun reformat(file: File, out: File) {
                         bytes,
                         Charsets.UTF_8
                     ), url
-                ).text().words().joinToString(separator = " ")}\n"
+                ).text().words().joinToString(separator = " ").takeIf { it.isNotBlank() } ?: "_"}\n"
             )
         }
     }
@@ -32,7 +32,7 @@ fun reformatTest(file: File, out: File) {
                 bytes,
                 Charsets.UTF_8
             ), url
-        ).text().words().joinToString(separator = " ")
+        ).text().words().joinToString(separator = " ").takeIf { it.isNotBlank() } ?: "_"
     }.toList()
     out.bufferedWriter().use { writer ->
         readIds(file).withIndex().forEach {
@@ -68,13 +68,13 @@ fun readFile(file: File): Sequence<D> = sequence {
     }
 }
 
-private val WORDS_REGEX = "([a-zA-Z]+|[а-яА-Я]+|[0-9]+)".toRegex()
-private val URL_REGEX = "\\b(https?|ftp|file)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]".toRegex()
+private val WORDS_REGEX = "\\b.+\\b".toRegex()
 
 fun String.words(): List<String> {
-    return WORDS_REGEX.findAll(this.replace(URL_REGEX, "")).mapNotNull { result ->
-        result.value.toLowerCase().let {
-            when {
+    return WORDS_REGEX.findAll(this).mapNotNull { result ->
+        result.value.toLowerCase().replace('\t', ' ').replace('\n', ' ')
+//            .let {
+//            when {
 //                it.first().isDigit() -> {
 //                    val x = it.toLongOrNull()
 //                    when {
@@ -87,10 +87,10 @@ fun String.words(): List<String> {
 //                        else -> null
 //                    }
 //                }
-                english.checkString(it) -> english.getNormalForms(it).first()
-                russian.checkString(it) -> russian.getNormalForms(it).first()
-                else -> null
-            }
-        }
+//                english.checkString(it) -> english.getNormalForms(it).first()
+//                russian.checkString(it) -> russian.getNormalForms(it).first()
+//                else -> null
+//            }
+//        }
     }.filter { it.isNotBlank() }.toList()
 }

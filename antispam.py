@@ -13,6 +13,7 @@ from sklearn.pipeline import make_pipeline
 from xgboost import XGBClassifier
 import subprocess
 import os
+import base64
 
 
 def main():
@@ -30,16 +31,18 @@ def main():
     print(f)
 
     print("Processing files..")
-    subprocess.run(f)
+    # subprocess.run(f)
     print("Processed files")
 
     x = []
     y = []
 
-    with codecs.open(tempTrain, encoding='utf-8') as file:
-        for line in file:
-            spam, words = line.split('\t')
-            x.append(words)
+    with codecs.open(args.train, encoding='utf-8') as file:
+        for i, line in enumerate(file):
+            if i == 0:
+                continue
+            _, spam, _, text = line.split('\t')
+            x.append(base64.b64decode(text).decode("utf-8", errors="ignore"))
             y.append(int(spam))
 
     print("Loaded files")
@@ -51,12 +54,10 @@ def main():
     )
     print(svm.SVC().get_params().keys())
     param_grid = {
-        'xgbclassifier__max_depth': [5],
-        'xgbclassifier__learning_rate': [0.4],
-        'xgbclassifier__n_estimators': [500],
+        'xgbclassifier__n_estimators': [1000],
         'tfidfvectorizer__max_features': [5000]
     }
-    grid = GridSearchCV(pipe, param_grid, cv=5, scoring=f1_scorer)
+    grid = GridSearchCV(pipe, param_grid, cv=2, scoring=f1_scorer)
     grid3 = grid.fit(x, y)
 
     print(grid3.best_score_)
@@ -64,11 +65,13 @@ def main():
 
     test_x = []
     ids = []
-    with codecs.open(tempTest, encoding='utf-8') as file:
-        for line in file:
-            t, words = line.split('\t')
-            ids.append(int(t))
-            test_x.append(words)
+    with codecs.open(args.test, encoding='utf-8') as file:
+        for i, line in enumerate(file):
+            if i == 0:
+                continue
+            id, _, _, text = line.split('\t')
+            ids.append(int(id))
+            test_x.append(base64.b64decode(text).decode("utf-8", errors="ignore"))
 
     predicted = grid3.predict(test_x)
     with codecs.open(args.out, mode="w", encoding="utf-8") as file:
